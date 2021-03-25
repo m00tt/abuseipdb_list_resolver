@@ -8,8 +8,8 @@ Go to https://www.abuseipdb.com/ > Login > Account > API > Create Key<br>
 If you need to make a lot of requests you can think about buying a paid plan (Account > Plans)<br><br>
 
 Install the following python libraries:
- - <b>pip install requests</b>
- - <b>pip install socket.py</b>
+ - `pip install requests`
+ - `pip install socket.py`
 
 # Usage steps
  - You have to create a simple .txt file that contains the list of IPs/Hosts (1 item for each line)
