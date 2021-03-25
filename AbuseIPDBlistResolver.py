@@ -1,9 +1,8 @@
 import requests
-import json
-from datetime import datetime
-import os
 import socket
-
+import json
+import os
+from datetime import datetime
 
 
 def getList(filename):
@@ -81,8 +80,3 @@ while filetype != 0 and filetype != 1:
 ip_list = getList(filename)
 createFile(filetype)
 checkIp(ip_list, maxAgeInDays, api_key, filetype)
-
-
-
-
-
