@@ -4,7 +4,7 @@ The script allows you to create IPs/Hosts lists to check and get an immediate re
 
 # Requirements
 You need to create your AbuseIPDB API_KEY (Dude, don't tremble, it's free).<br>
-Go to https://www.abuseipdb.com/ > Login > Account > API > Create Key<br>
+Go to [AbuseIPDB](https://www.abuseipdb.com/) > Login > Account > API > Create Key<br>
 If you need to make a lot of requests you can think about buying a paid plan (Account > Plans)<br><br>
 
 Install the following python libraries:
