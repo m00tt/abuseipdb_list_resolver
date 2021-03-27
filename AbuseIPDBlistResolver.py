@@ -1,7 +1,7 @@
-import requests
 import socket
-import json
+import requests
 import os
+import json
 from datetime import datetime
 
 
@@ -11,7 +11,11 @@ def getList(filename):
     ip_list_tmp = [x.strip() for x in ip_list_tmp]
     ip_list = []
     for x in ip_list_tmp:
-        ip_list.append(socket.gethostbyname(x))
+        item = None
+        try:
+            ip_list.append(socket.gethostbyname(x))
+        except:
+            print(x+" : Unresolvable host")
     f.close()
     return ip_list
 
