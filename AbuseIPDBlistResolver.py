@@ -53,7 +53,7 @@ def checkIp(ip_list, maxAgeInDays, api_key, filetype):
         else:
             data = str(decodedResponse.get("data").get("ipAddress"))
             reports = str(decodedResponse.get("data").get("abuseConfidenceScore"))
-            str_tmp = "IP Address: " + data + " \tScore: " + reports + "\n"
+            str_tmp = "IP Address: " + data + "\t\tScore: " + reports + "\n"
             f = open(os.path.dirname(full_path) + "/AbuseIPDB_results.txt", 'a')
             f.writelines(str_tmp)
         f.close()
