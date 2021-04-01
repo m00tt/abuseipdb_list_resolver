@@ -32,7 +32,7 @@ def createFile(filetype):
         f.write('\n\n\n'+now+'\n')
     f.close()
 
-def checkIp(ip_list, maxAgeInDays, api_key, filetype):
+def checkIp(ip_list, maxAgeInDays, api_key, filetype, scoreFilter):
     # Defining the api-endpoint
     url = 'https://api.abuseipdb.com/api/v2/check'
 
@@ -49,24 +49,48 @@ def checkIp(ip_list, maxAgeInDays, api_key, filetype):
         full_path = os.path.realpath(__file__)
         if filetype == 0:
             f = open(os.path.dirname(full_path) + "/AbuseIPDB_results.json", 'a')
-            f.write(json.dumps(decodedResponse, sort_keys=True, indent=4))
+            if(int(decodedResponse.get("data").get("abuseConfidenceScore")) > scoreFilter):
+                f.write(json.dumps(decodedResponse, sort_keys=True, indent=4))
         else:
             data = str(decodedResponse.get("data").get("ipAddress"))
             reports = str(decodedResponse.get("data").get("abuseConfidenceScore"))
-            str_tmp = "IP Address: " + data + "\t\tScore: " + reports + "\n"
             f = open(os.path.dirname(full_path) + "/AbuseIPDB_results.txt", 'a')
-            f.writelines(str_tmp)
+            if(int(reports)>scoreFilter):
+                str_tmp = "IP Address: " + data + "\t\tScore: " + reports + "\n"
+                f.writelines(str_tmp)
         f.close()
 
 
 
 filetype = None
-maxAgeInDays = 90
+maxAgeInDays = None
 filename = None
+scoreFilter = None
 
-tmp = input("Search days (Press enter for DEFAULT = 90 days): ")
-if(tmp.strip() != ""):
-    maxAgeInDays = tmp.strip()
+while maxAgeInDays == None:
+    tmp = input("Search days (Press enter for DEFAULT = 90 days): ")
+    if(tmp.strip() == ""):
+        maxAgeInDays = 90
+    else:
+        try:
+            tmp = int(tmp.strip())
+            maxAgeInDays = tmp
+        except:
+            print("Dude, no jokes")
+
+while scoreFilter == None:
+    tmp = input("Enter minimum score accepted (Press enter for DEFAULT = ALL): ")
+    if(tmp.strip() == ""):
+        scoreFilter = 0
+    else:
+        try:
+            tmp = int(tmp.strip())
+            if(tmp >= 0 and tmp < 100):
+                scoreFilter = tmp
+            else:
+                print("Score value must be between 0 and 99")
+        except:
+            print("Dude, no jokes")
 
 api_key = input("Insert your AbuseIPDB API_KEY: ")
 api_key = api_key.strip()
@@ -83,4 +107,4 @@ while filetype != 0 and filetype != 1:
 
 ip_list = getList(filename)
 createFile(filetype)
-checkIp(ip_list, maxAgeInDays, api_key, filetype)
+checkIp(ip_list, maxAgeInDays, api_key, filetype, scoreFilter)
