@@ -10,14 +10,14 @@ def getList(filename):
         ip_list_tmp = f.readlines()
     ip_list_tmp = [x.strip() for x in ip_list_tmp]
     ip_list = []
+    ip_unresolvable = []
     for x in ip_list_tmp:
-        item = None
         try:
             ip_list.append(socket.gethostbyname(x))
         except:
-            print(x+" : Unresolvable host")
+            ip_unresolvable.append(x)
     f.close()
-    return ip_list
+    return {"resolved":ip_list, "unresolved":ip_unresolvable}
 
 def createFile(filetype):
     now = datetime.now()
@@ -32,7 +32,7 @@ def createFile(filetype):
         f.write('\n\n\n'+now+'\n')
     f.close()
 
-def checkIp(ip_list, maxAgeInDays, api_key, filetype, scoreFilter):
+def checkIp(ip_list, ip_unresolvable, maxAgeInDays, api_key, filetype, scoreFilter):
     # Defining the api-endpoint
     url = 'https://api.abuseipdb.com/api/v2/check'
 
@@ -41,24 +41,35 @@ def checkIp(ip_list, maxAgeInDays, api_key, filetype, scoreFilter):
         'Key': api_key
     }
 
+    full_path = os.path.realpath(__file__)
+    if filetype == 0:
+        f = open(os.path.dirname(full_path) + "/AbuseIPDB_results.json", 'a')
+    else:
+        f = open(os.path.dirname(full_path) + "/AbuseIPDB_results.txt", 'a')
+
     for x in ip_list:
         queryString = {'ipAddress':x, 'maxAgeInDays':maxAgeInDays}
         response = requests.request(method='GET', url=url, headers=headers, params=queryString)
         # Formatted output
         decodedResponse = json.loads(response.text)
-        full_path = os.path.realpath(__file__)
         if filetype == 0:
-            f = open(os.path.dirname(full_path) + "/AbuseIPDB_results.json", 'a')
-            if(int(decodedResponse.get("data").get("abuseConfidenceScore")) > scoreFilter):
+            if(int(decodedResponse.get("data").get("abuseConfidenceScore")) >= scoreFilter):
                 f.write(json.dumps(decodedResponse, sort_keys=True, indent=4))
         else:
             data = str(decodedResponse.get("data").get("ipAddress"))
             reports = str(decodedResponse.get("data").get("abuseConfidenceScore"))
-            f = open(os.path.dirname(full_path) + "/AbuseIPDB_results.txt", 'a')
-            if(int(reports)>scoreFilter):
+            if(int(reports)>=scoreFilter):
                 str_tmp = "IP Address: " + data + "\t\tScore: " + reports + "\n"
                 f.writelines(str_tmp)
-        f.close()
+    
+    for x in ip_unresolvable:
+        if filetype == 0:
+            f.writelines('\n{"Unresolvable host" : "'+x+'" }')
+        else:
+            f.writelines("Unresolvable host: "+x)
+            
+    f.close()
+
 
 
 
@@ -105,6 +116,8 @@ while filetype != 0 and filetype != 1:
     except:
         print("Dude, no jokes")
 
-ip_list = getList(filename)
+ip_ret = getList(filename)
+ip_list = ip_ret["resolved"]
+ip_unresolved = ip_ret["unresolved"]
 createFile(filetype)
-checkIp(ip_list, maxAgeInDays, api_key, filetype, scoreFilter)
+checkIp(ip_list, ip_unresolved, maxAgeInDays, api_key, filetype, scoreFilter)
