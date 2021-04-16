@@ -47,6 +47,9 @@ def checkIp(ip_list, ip_unresolvable, maxAgeInDays, api_key, filetype, scoreFilt
     else:
         f = open(os.path.dirname(full_path) + "/AbuseIPDB_results.txt", 'a')
 
+    firstTimeJson = True
+    lastTimeJson = 0 
+
     for x in ip_list:
         queryString = {'ipAddress':x, 'maxAgeInDays':maxAgeInDays}
         response = requests.request(method='GET', url=url, headers=headers, params=queryString)
@@ -64,7 +67,13 @@ def checkIp(ip_list, ip_unresolvable, maxAgeInDays, api_key, filetype, scoreFilt
     
     for x in ip_unresolvable:
         if filetype == 0:
-            f.writelines('\n{"Unresolvable host" : "'+x+'" }')
+            if firstTimeJson:
+                f.writelines('{\n\t"Unresolvable hosts": [')
+                firstTimeJson = False
+            f.writelines('\n\t\t"'+x+'"')
+            if lastTimeJson == len(ip_unresolved)-1:
+                f.writelines('\n\t]\n}')
+            lastTimeJson += 1
         else:
             f.writelines("Unresolvable host: "+x)
             
