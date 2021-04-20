@@ -9,15 +9,14 @@ def getList(filename):
     with open(filename, "r") as f:
         ip_list_tmp = f.readlines()
     ip_list_tmp = [x.strip() for x in ip_list_tmp]
-    ip_list = []
     ip_unresolvable = []
     for x in ip_list_tmp:
         try:
-            ip_list.append(socket.gethostbyname(x))
+            socket.gethostbyname(x)
         except:
             ip_unresolvable.append(x)
     f.close()
-    return {"resolved":ip_list, "unresolved":ip_unresolvable}
+    return {"resolved":ip_list_tmp, "unresolved":ip_unresolvable}
 
 def createFile(filetype):
     now = datetime.now()
@@ -51,7 +50,10 @@ def checkIp(ip_list, ip_unresolvable, maxAgeInDays, api_key, filetype, scoreFilt
     lastTimeJson = 0 
 
     for x in ip_list:
-        queryString = {'ipAddress':x, 'maxAgeInDays':maxAgeInDays}
+        try:    
+            queryString = {'ipAddress':socket.gethostbyname(x), 'maxAgeInDays':maxAgeInDays}
+        except:
+            continue
         response = requests.request(method='GET', url=url, headers=headers, params=queryString)
         # Formatted output
         decodedResponse = json.loads(response.text)
@@ -62,7 +64,7 @@ def checkIp(ip_list, ip_unresolvable, maxAgeInDays, api_key, filetype, scoreFilt
             data = str(decodedResponse.get("data").get("ipAddress"))
             reports = str(decodedResponse.get("data").get("abuseConfidenceScore"))
             if(int(reports)>=scoreFilter):
-                str_tmp = "IP Address: " + data + "\t\tScore: " + reports + "\n"
+                str_tmp = "IP Address: " + x + "\t\t\tScore: " + reports + "\n"
                 f.writelines(str_tmp)
     
     for x in ip_unresolvable:
@@ -75,7 +77,7 @@ def checkIp(ip_list, ip_unresolvable, maxAgeInDays, api_key, filetype, scoreFilt
                 f.writelines('\n\t]\n}')
             lastTimeJson += 1
         else:
-            f.writelines("Unresolvable host: "+x)
+            f.writelines("Unresolvable host: "+x+"\n")
             
     f.close()
 
@@ -99,7 +101,7 @@ while maxAgeInDays == None:
             print("Dude, no jokes")
 
 while scoreFilter == None:
-    tmp = input("Enter minimum score accepted (Press enter for DEFAULT = ALL): ")
+    tmp = input("Enter minimum score accepted (Press ENTER for DEFAULT = ALL): ")
     if(tmp.strip() == ""):
         scoreFilter = 0
     else:
@@ -112,8 +114,12 @@ while scoreFilter == None:
         except:
             print("Dude, no jokes")
 
-api_key = input("Insert your AbuseIPDB API_KEY: ")
+api_key = input("Insert your AbuseIPDB API_KEY (Press ENTER to read from your_API.txt): ")
 api_key = api_key.strip()
+if api_key == "":
+    full_path = os.path.realpath(__file__)
+    f = open(os.path.dirname(full_path) + "/your_KEY.txt", 'r')
+    api_key = f.readline()
 
 while filename == None or filename == "":
     filename = input("Enter the full path of the file to import (.txt): ")
