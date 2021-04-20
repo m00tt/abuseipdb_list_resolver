@@ -12,11 +12,11 @@ Install the following python libraries:
  - `pip install socket.py`
 
 # Usage steps
- - You have to create a simple .txt file that contains the list of IPs/Hosts (1 item for each line like Example.txt)
+ - You have to create a simple .txt file that contains the list of IPs/Hosts (1 item for each line)
  - Run AbuseIPDBlistResolver.py
  - Enter a value for search days (DEFAULT = 90 days)
  - Enter a value for the score filter (DEFAULT = ALL)
- - Enter your AbuseIPDB API_KEY
+ - Enter your AbuseIPDB API_KEY or write it into first line of your_KEY.txt file
  - Enter the full path of the .txt file containing the IPs/Hosts list
  - Choose the output file format (0 = Json | 1 = Compact txt)
  - The script will create (or write) the result to AbuseIPDB_result.x file within the path from which the script was launched
@@ -26,4 +26,3 @@ Install the following python libraries:
 - "Score filter" represents the minumum value acceptable as score value.<br>
 - "Compact txt" only returns a list of IPs and their score.<br><br>
 While generating the results, the script is able to append data into an existing file by adding a Timestamp so that you can distinguish the various searches.<br><br>
-
