@@ -1,4 +1,4 @@
-# AbuseIPDB-List-Resolver
+# AbuseIPDB List Resolver
 A Python script that gets a list of IPs/Hosts as input and returns their AbuseIPDB score and others useful information.<br>
 Within the limits of the checks allowed by your AbuseIPDB API_KEY :)
 
