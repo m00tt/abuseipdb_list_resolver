@@ -10,6 +10,7 @@ If you need to make a lot of requests you can think about buying a paid plan (Ac
 Install the following python libraries:
  - `pip install requests`
  - `pip install socket.py`
+ - `pip install xlsxwriter`
 
 # Usage steps
  - You have to create a simple .txt file that contains the list of IPs/Hosts (1 item for each line)
@@ -18,7 +19,7 @@ Install the following python libraries:
  - Enter a value for the score filter (DEFAULT = ALL)
  - Enter your AbuseIPDB API_KEY or write it into first line of your_KEY.txt file
  - Enter the full path of the .txt file containing the IPs/Hosts list
- - Choose the output file format (0 = Json | 1 = Compact txt)
+ - Choose the output file format (0 = jsonc | 1 = Compact txt | 2 = xlsx)
  - The script will create (or write) the result to AbuseIPDB_result.x file within the path from which the script was launched
 
 # Tips

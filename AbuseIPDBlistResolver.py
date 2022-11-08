@@ -1,8 +1,9 @@
+from datetime import datetime
 import socket
 import requests
+import xlsxwriter
 import os
 import json
-from datetime import datetime
 
 
 def getList(filename):
@@ -18,19 +19,6 @@ def getList(filename):
     f.close()
     return {"resolved":ip_list_tmp, "unresolved":ip_unresolvable}
 
-def createFile(filetype):
-    now = datetime.now()
-    now = now.strftime("%d/%m/%Y %H:%M:%S")
-    if filetype == 0:
-        full_path = os.path.realpath(__file__)
-        f = open(os.path.dirname(full_path) + "/AbuseIPDB_results.json", 'a+')
-        f.write('\n\n\n'+'Timestamp : '+now+'\n')
-    else:
-        full_path = os.path.realpath(__file__)
-        f = open(os.path.dirname(full_path) + "/AbuseIPDB_results.txt", 'a+')
-        f.write('\n\n\n'+now+'\n')
-    f.close()
-
 def checkIp(ip_list, ip_unresolvable, maxAgeInDays, api_key, filetype, scoreFilter):
     # Defining the api-endpoint
     url = 'https://api.abuseipdb.com/api/v2/check'
@@ -39,15 +27,32 @@ def checkIp(ip_list, ip_unresolvable, maxAgeInDays, api_key, filetype, scoreFilt
         'Accept': 'application/json',
         'Key': api_key
     }
-
-    full_path = os.path.realpath(__file__)
+    
+    now = datetime.now()
+    now = now.strftime("%d/%m/%Y %H:%M:%S")
     if filetype == 0:
-        f = open(os.path.dirname(full_path) + "/AbuseIPDB_results.json", 'a')
-    else:
-        f = open(os.path.dirname(full_path) + "/AbuseIPDB_results.txt", 'a')
+        full_path = os.path.realpath(__file__)
+        f = open(os.path.dirname(full_path) + "/AbuseIPDB_results.jsonc", 'a+')
+        f.write('\n\n\n//'+'Timestamp : '+now+'\n')
+    elif filetype == 1:
+        full_path = os.path.realpath(__file__)
+        f = open(os.path.dirname(full_path) + "/AbuseIPDB_results.txt", 'a+')
+        f.write('\n\n\n'+now+'\n')
+    elif filetype == 2:
+        now = now.replace("/", "-")
+        now = now.replace(":", ".")
+        full_path = os.path.realpath(__file__)
+        f = xlsxwriter.Workbook(os.path.dirname(full_path) + "/AbuseIPDB_results.xlsx")
+        worksheet = f.add_worksheet(now)
+        worksheet.write('A1', 'Domain')
+        worksheet.write('B1', 'IP Address')
+        worksheet.write('C1', 'ISP')
+        worksheet.write('D1', 'Country Code')
+        worksheet.write('E1', 'Score')
 
     firstTimeJson = True
-    lastTimeJson = 0 
+    lastTimeJson = 0
+    xlsx_counter = 2
 
     for x in ip_list:
         try:    
@@ -60,12 +65,25 @@ def checkIp(ip_list, ip_unresolvable, maxAgeInDays, api_key, filetype, scoreFilt
         if filetype == 0:
             if(int(decodedResponse.get("data").get("abuseConfidenceScore")) >= scoreFilter):
                 f.write(json.dumps(decodedResponse, sort_keys=True, indent=4))
-        else:
+        elif filetype == 1:
             data = str(decodedResponse.get("data").get("ipAddress"))
             reports = str(decodedResponse.get("data").get("abuseConfidenceScore"))
             if(int(reports)>=scoreFilter):
                 str_tmp = "IP Address: " + x + "\t\t\tScore: " + reports + "\n"
                 f.writelines(str_tmp)
+        elif filetype == 2:
+            ip = str(decodedResponse.get("data").get("ipAddress", "null"))
+            domain = str(decodedResponse.get("data").get("domain", "null"))
+            countryCode = str(decodedResponse.get("data").get("countryCode", "null"))
+            isp = str(decodedResponse.get("data").get("isp", "null"))
+            reports = str(decodedResponse.get("data").get("abuseConfidenceScore", "null"))
+            if(int(reports)>=scoreFilter):
+                worksheet.write('A'+str(xlsx_counter), domain)
+                worksheet.write('B'+str(xlsx_counter), ip)
+                worksheet.write('C'+str(xlsx_counter), isp)
+                worksheet.write('D'+str(xlsx_counter), countryCode)
+                worksheet.write('E'+str(xlsx_counter), reports)
+            xlsx_counter+=1
     
     for x in ip_unresolvable:
         if filetype == 0:
@@ -76,8 +94,15 @@ def checkIp(ip_list, ip_unresolvable, maxAgeInDays, api_key, filetype, scoreFilt
             if lastTimeJson == len(ip_unresolved)-1:
                 f.writelines('\n\t]\n}')
             lastTimeJson += 1
-        else:
+        elif filetype == 1:
             f.writelines("Unresolvable host: "+x+"\n")
+        elif filetype == 2:
+            worksheet.write('A'+str(xlsx_counter), x)
+            worksheet.write('B'+str(xlsx_counter), "Unresolvable host")
+            worksheet.write('C'+str(xlsx_counter), "Unresolvable host")
+            worksheet.write('D'+str(xlsx_counter), "Unresolvable host")
+            worksheet.write('E'+str(xlsx_counter), "Unresolvable host")
+            xlsx_counter+=1
             
     f.close()
 
@@ -114,7 +139,7 @@ while scoreFilter == None:
         except:
             print("Dude, no jokes")
 
-api_key = input("Insert your AbuseIPDB API_KEY (Press ENTER to read from your_API.txt): ")
+api_key = input("Insert your AbuseIPDB API_KEY (Press ENTER to read from your_KEY.txt): ")
 api_key = api_key.strip()
 if api_key == "":
     full_path = os.path.realpath(__file__)
@@ -125,14 +150,13 @@ while filename == None or filename == "":
     filename = input("Enter the full path of the file to import (.txt): ")
     filename = filename.strip()
 
-while filetype != 0 and filetype != 1:
+while filetype != 0 and filetype != 1 and filetype != 2:
     try:
-        filetype = int(input("Choose the output format (JSON = 0, COMPACT TXT = 1): "))
+        filetype = int(input("Choose the output format (JSON = 0, COMPACT TXT = 1, XLSX = 2): "))
     except:
         print("Dude, no jokes")
 
 ip_ret = getList(filename)
 ip_list = ip_ret["resolved"]
 ip_unresolved = ip_ret["unresolved"]
-createFile(filetype)
 checkIp(ip_list, ip_unresolved, maxAgeInDays, api_key, filetype, scoreFilter)
